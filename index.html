@@ -19,7 +19,7 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
 #mstat{color:var(--mt);min-height:22px;font-size:14px}.id{font-size:22px;letter-spacing:3px;color:var(--ac)}
 .game{display:flex;gap:18px;justify-content:center;padding:14px;flex-wrap:wrap;align-items:flex-start}
 #board{width:var(--bs);height:var(--bs);display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;border-radius:8px;overflow:hidden;box-shadow:0 8px 30px #0008;user-select:none}
-.sq{position:relative;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.sq{position:relative;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}
 .lt{background:var(--lt)}.dk{background:var(--dk)}
 .sq.last{box-shadow:inset 0 0 0 100px #f0e06a55}.sq.sel{box-shadow:inset 0 0 0 100px #5aa9ffaa}
 .sq.tg::after{content:"";position:absolute;width:30%;height:30%;border-radius:50%;background:#0a1a2e66}
@@ -32,6 +32,8 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
 .pc{display:block;text-align:center;font-size:calc(var(--bs)/8*.8);line-height:1;cursor:pointer;z-index:1}
 .pw{color:#fafafa;text-shadow:0 0 2px #000,0 0 3px #000,0 1px 4px #000}
 .pb{color:#181818;text-shadow:0 0 2px #bbb,0 0 1px #999}
+.pc.im{width:88%;height:88%;display:block}.pc.im svg{display:block;overflow:visible}
+#log .d{color:var(--am)}.leg{margin-top:8px;color:var(--mt);font:12px system-ui,sans-serif}
 .pc.pop{animation:pop .25s ease-out}@keyframes pop{from{transform:scale(1.35)}to{transform:scale(1)}}
 .co{position:absolute;font-size:10px;color:#0009;font-weight:700}.co.f{right:3px;bottom:1px}.co.r{left:3px;top:1px}
 .side{width:300px;max-width:94vw;display:flex;flex-direction:column;gap:10px}
@@ -59,7 +61,12 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
 <div id="menu" class="card">
  <div><h1>♚ Execution Chess</h1><p class="sub">Chess960 + защищённый король + исчезающая рокировка</p></div>
  <div class="row"><label style="flex:0 0 auto">Контроль:</label><select id="tc"><option>1+0</option><option>3+0</option><option selected>5+0</option><option>10+0</option><option>3+2</option><option>5+3</option><option>15+10</option><option>30+0</option></select></div>
- <label><input type="checkbox" id="lim" checked style="flex:0">Рокировка сгорает после 10 ходов (п. 4.4)</label>
+ <label><input type="checkbox" id="f960" checked style="flex:0">Расстановка Фишера (Chess960)</label>
+ <label><input type="checkbox" id="anim" checked style="flex:0">Анимация ходов</label>
+ <label>Рокировка сгорает через <input type="number" id="limn" value="10" min="0" max="99" style="width:70px;flex:0"> ходов (0 — не сгорает)</label>
+ <div class="row"><label style="flex:0 0 auto">Фигуры:</label><select id="pset"><option value="classic">Классика</option><option value="wood">Дерево</option><option value="neon">Неон</option><option value="gold">Золото</option><option value="mint">Мята</option><option value="ember">Уголь</option><option value="glass">Стекло</option><option value="ink">Чернила</option><option value="flat">Плоские</option><option value="unicode">Юникод</option></select></div>
+ <div class="row"><label style="flex:0 0 auto">Звуки:</label><select id="sset"><option value="wood">Дерево</option><option value="soft">Мягкие</option><option value="retro">Ретро</option><option value="glass">Стекло</option><option value="bubble">Пузыри</option><option value="drum">Барабан</option></select></div>
+ <div class="row"><label style="flex:0 0 auto">Сторона создателя:</label><select id="side"><option value="r">Случайно</option><option value="w">Белые</option><option value="b">Чёрные</option></select></div>
  <button class="pri" id="bCreate">Создать комнату</button>
  <div class="row"><input id="rid" placeholder="ID комнаты" maxlength="8" style="text-transform:uppercase"><button id="bJoin">Подключиться по ID</button></div>
  <button id="bLocal">Игра на одном устройстве</button>
@@ -76,12 +83,12 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
   <div id="status"></div>
   <div id="log"></div>
   <div class="clock" id="cBot"><span id="nBot"></span><b id="tBot">0:00</b></div>
-  <div class="btns"><button id="bDraw">Ничья</button><button id="bRes">Сдаться</button><button id="bNew">Новая партия</button><button class="bRules">Правила</button><button id="bMenu">Меню</button></div>
+  <div class="btns"><button id="bDraw">Ничья</button><button id="bRes">Сдаться</button><button id="bNew">Новая партия</button><button id="bPgn" class="hide">PGN</button><button id="bSnd" title="Звук">🔊</button><button class="bRules">Правила</button><button id="bMenu">Меню</button></div>
  </div>
 </div>
 <div id="rules" class="hide"><div><header><h2>Правила Execution Chess</h2><button id="bRulesX">✕</button></header><div class="body">
 <p>Гибрид Chess960, механики защищённого короля и исчезающей рокировки. Игра на внимательность: цена ошибки — мгновенная победа соперника, если он её заметит.</p>
-<h3>1. Расстановка</h3><ul><li>Доска 8×8, стандартный комплект фигур, расстановка по Chess960: пешки на 2-й и 7-й горизонталях, король между ладьями, слоны на полях разного цвета, ферзь и кони — в остальных клетках.</li></ul>
+<h3>1. Расстановка</h3><ul><li>Доска 8×8, стандартный комплект фигур, расстановка по Chess960 (в настройках можно выбрать обычную): пешки на 2-й и 7-й горизонталях, король между ладьями, слоны на полях разного цвета, ферзь и кони — в остальных клетках.</li></ul>
 <h3>2. Ходы фигур</h3><ul><li>Ходы, взятия и правила пешек (ход на две клетки, взятие на проходе, превращение) — классические. Отличаются только правила шаха, защиты и взятия короля.</li></ul>
 <h3>3. Шах, защита и взятие короля</h3><ul>
 <li><b>Шах</b> не запрещает никакой ход. Можно оставить короля под боем, а можно даже подставить его — это проверка внимательности.</li>
@@ -94,7 +101,7 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
 <h3>4. Рокировка (исчезающая)</h3><ul>
 <li>Один раз за партию, если король и ладья не ходили и поля между ними свободны. Правила Фишера: король идёт на g/c, ладья на f/d. Рокировку делайте ходом короля на свою ладью (или на поле g/c, если оно не обычный ход короля).</li>
 <li>Королю нельзя проходить через атакованные поля.</li>
-<li>Право сгорает, если король или ладья сходили, король получил любой шах (даже защищённый) или прошло 10 ходов (если не отключено в настройках).</li></ul>
+<li>Право сгорает, если король или ладья сходили, король получил любой шах (даже защищённый) или прошло заданное в настройках число ходов (по умолчанию 10; 0 — право не сгорает).</li></ul>
 <h3>5. Окончание партии</h3><ul>
 <li><b>Взятие короля (Kx)</b> — немедленная победа.</li>
 <li><b>Мат:</b> королю можно сделать легальное Kx, и ни один ход не делает Kx нелегальным.</li>
@@ -104,7 +111,7 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
 <h3>7. Управление и нотация</h3><ul>
 <li>Ход — кликом или перетаскиванием. Взять короля — ходом на его клетку.</li>
 <li>Если соперник перевёл короля в V, а вы не заметили и сделали другой ход, ход засчитан, возврата нет. Игра не подсказывает ни шахи, ни уязвимость.</li>
-<li>Нотация (<b>+</b> шах, <b>#</b> мат, <b>V</b> уязвимость, <b>Kx</b> взятие короля) показывается после окончания партии.</li></ul>
+<li>Нотация показывается после окончания партии: <b>+</b> — шах сопернику, <b>#</b> — мат, <b>V</b> — после хода король уязвим (Kx легально), <b>D</b> — после хода король атакован, но защищён (Kx нелегально), <b>Kx</b> — взятие короля.</li></ul>
 </div></div></div>
 <div id="promo" class="hide"><div></div></div>
 <div id="toast" class="hide"></div>
@@ -119,7 +126,8 @@ const NM=c=>c==='w'?'Белые':'Чёрные';
 const N_OFF=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
 const K_OFF=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
 const R_D=[[-1,0],[1,0],[0,-1],[0,1]],B_D=[[-1,-1],[-1,1],[1,-1],[1,1]];
-let G=null,peer=null,conn=null,hosting=false,hc=null,tt=null;
+let G=null,peer=null,conn=null,hosting=false,hc=null,tt=null,PS='classic',ST='wood',AC=null,MUTE=false;
+try{PS=localStorage.getItem('ecps2')||PS;ST=localStorage.getItem('ecst')||ST}catch(e){}
 
 /* ============ ДВИЖОК ============ */
 function gen960(){const a=Array(8).fill(null),fr=()=>a.map((v,i)=>v?null:i).filter(v=>v!==null),pk=l=>l[Math.random()*l.length|0];
@@ -176,7 +184,7 @@ function apply(s,m){const n={b:s.b.slice(),turn:opp(s.turn),cast:{w:s.cast.w.sli
   if(p.toLowerCase()==='p'&&Math.abs(m.t-m.f)===16)n.ep=(m.f+m.t)/2;
   if(p.toLowerCase()==='k')n.cast[s.turn]=[];
   ['w','b'].forEach(c=>n.cast[c]=n.cast[c].filter(q=>q!==m.f&&q!==m.t))}
- if(n.lim&&n.full>10){n.cast.w=[];n.cast.b=[]}                       // 4.4: 10 ходов
+ if(n.lim&&n.full>n.lim){n.cast.w=[];n.cast.b=[]}                       // 4.4: 10 ходов
  ['w','b'].forEach(c=>{const k=b.indexOf(c==='w'?'K':'k');if(k>=0&&attackers(b,k,opp(c)).length)n.cast[c]=[]}); // 4.4: любой шах
  return n}
 
@@ -198,7 +206,7 @@ const posKey=s=>s.b.map(q=>q||'.').join('')+s.turn+s.cast.w+'|'+s.cast.b+s.ep+(v
 function init(cfg){const rk=cfg.pos,b=Array(64).fill(null),cast={w:[],b:[]};
  for(let i=0;i<8;i++){b[i]=rk[i].toLowerCase();b[8+i]='p';b[48+i]='P';b[56+i]=rk[i];if(rk[i]==='R'){cast.w.push(56+i);cast.b.push(i)}}
  const s={b,turn:'w',cast,ep:-1,half:0,full:1,lim:cfg.lim};
- G={s,log:[],my:cfg.my,mode:cfg.mode,clock:{w:cfg.min*60000,b:cfg.min*60000},inc:cfg.inc*1000,over:false,sel:null,last:null,rep:{},t0:performance.now(),res:'',legal:null,rk};
+ G={s,log:[],my:cfg.my,mode:cfg.mode,clock:{w:cfg.min*60000,b:cfg.min*60000},inc:cfg.inc*1000,over:false,sel:null,last:null,rep:{},t0:performance.now(),res:'',legal:null,rk,cfg,rc:'*',why:'',anim:null,noAnim:false};
  G.legal=evalPos(s).legal;G.rep[posKey(s)]=1;
  $('menu').classList.add('hide');$('gameScr').classList.remove('hide');$('promo').classList.add('hide');
  $('bNew').classList.toggle('hide',false);render()}
@@ -207,12 +215,15 @@ const canMove=()=>G&&!G.over&&(G.mode==='local'||G.s.turn===G.my);
 
 function doMove(m,net){const s=G.s,mover=s.turn,ps=pseudo(s),base=san(s,m,ps);
  if(G.mode==='online'&&!net&&conn&&conn.open)conn.send({t:'move',f:m.f,t2:m.t,promo:m.promo||null});
- G.last={f:m.f,t:m.t};G.sel=null;
+ const kd=m.castle?(m.f>>3)*8+m.kd:m.t;G.last={f:m.f,t:kd};G.sel=null;
+ G.anim=(G.noAnim||!$('anim').checked)?null:m.castle?[{f:m.f,t:kd},{f:m.t,t:(m.f>>3)*8+m.rd}]:[{f:m.f,t:m.t}];G.noAnim=false;
+ sfx(m.kx?'kx':m.castle?'castle':m.promo?'promo':(s.b[m.t]||m.ep)?'cap':'move');
  if(m.kx){G.log.push(base+' Kx');G.s=Object.assign({},s,{b:s.b.slice()});G.s.b[m.t]=s.b[m.f];G.s.b[m.f]=null;
   return endGame(mover,'взятие короля (Kx)',false)}
  const s2=apply(s,m),r=evalPos(s2);G.s=s2;G.clock[mover]+=G.inc;G.legal=r.legal;
  const ok=s2.b.indexOf(mover==='w'?'k':'K'),att=ok>=0&&attackers(s2.b,ok,mover).length>0;
- G.log.push(base+(r.mat?'#':att?'+':'')+(r.oppV?' V':''));
+ const ok2=s2.b.indexOf(mover==='w'?'K':'k'),own=ok2>=0&&attackers(s2.b,ok2,opp(mover)).length>0;
+ G.log.push(base+(r.mat?'#':att?'+':'')+(r.oppV?' V':own?' D':''));
  const key=posKey(s2);G.rep[key]=(G.rep[key]||0)+1;
  if(r.mat)endGame(mover,'мат (#)',false);
  else if(r.pat)endGame(null,'пат',false);
@@ -222,22 +233,72 @@ function doMove(m,net){const s=G.s,mover=s.turn,ps=pseudo(s),base=san(s,m,ps);
  else render(true)}
 
 function endGame(w,reason,send){if(G.over)return;G.over=true;G.sel=null;
- G.res=w?NM(w)+' победили — '+reason:'Ничья — '+reason;
+ G.res=w?NM(w)+' победили — '+reason:'Ничья — '+reason;G.rc=w==='w'?'1-0':w==='b'?'0-1':'1/2-1/2';G.why=reason;
+ sfx(w?(G.mode==='local'||w===G.my?'win':'lose'):'draw',.35);
  if(send&&G.mode==='online'&&conn&&conn.open)conn.send({t:'over',w,reason});
  render()}
 
 function findMoves(f,t){return G.legal.filter(m=>m.f===f&&(m.t===t||m.alias===t))}
 function tryMove(f,t){if(!canMove())return;const ms=findMoves(f,t);
- if(!ms.length){const b=G.s.b;if(b[t]&&b[t].toLowerCase()==='k'&&pseudo(G.s).some(m=>m.f===f&&m.t===t&&m.kx))toast('Kx нелегально: король защищён, а атакующий не прикрыт (3.2–3.3)');
+ if(!ms.length){
   G.sel=null;return render()}
  if(ms.length>1&&ms[0].promo){const box=$('promo').firstElementChild;box.innerHTML='';
-  ms.forEach(m=>{const bt=document.createElement('button'),w=G.s.turn==='w';bt.textContent=GL[m.promo];bt.className=w?'pw':'pb';
+  ms.forEach(m=>{const bt=document.createElement('button'),w=G.s.turn==='w';const pn=pieceNode(w?m.promo:m.promo.toLowerCase());pn.style.width='56px';pn.style.height='56px';pn.style.fontSize='44px';bt.appendChild(pn);
    bt.style.background='#8d99ab';bt.onclick=()=>{$('promo').classList.add('hide');doMove(m,false)};box.appendChild(bt)});
   $('promo').classList.remove('hide');return}
  doMove(ms[0],false)}
 
+/* ============ ЗВУК ============ */
+function tone(f,d,ty,v,at,f2){const t=AC.currentTime+at,o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.02)}
+function noise(d,v,at,fc,ty,q){const t=AC.currentTime+at,n=AC.sampleRate*d|0,buf=AC.createBuffer(1,n,AC.sampleRate),a=buf.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=buf;f.type=ty||'lowpass';f.frequency.value=fc;if(q)f.Q.value=q;g.gain.value=v;s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t)}
+function knock(a,fq,v,d){noise(d,v*1.6,a,fq,'bandpass',1.4);tone(fq/5,d*1.8,'sine',v*.8,a,fq/12)}
+function ac(){if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==='suspended')AC.resume()}
+document.addEventListener('pointerdown',()=>{try{ac()}catch(e){}});
+const SW={wood:'sine',soft:'sine',retro:'square',glass:'sine',bubble:'sine',drum:'triangle'};
+if(!SW[ST])ST='wood';
+function sfx(k,dl){if(MUTE)return;try{ac();if(!AC)return;const a=dl||0,T=ST,w=SW[T];
+ const hit=(x,big)=>{if(T==='wood'){if(big){knock(x,700,.9,.08);knock(x+.05,1200,.5,.05)}else knock(x,1000,.5,.05)}
+  else if(T==='soft'){if(big){tone(300,.12,'sine',.4,x,150);tone(600,.06,'sine',.2,x)}else tone(520,.08,'sine',.3,x,380)}
+  else if(T==='glass'){if(big){tone(1100,.35,'sine',.16,x);tone(1650,.25,'sine',.09,x);tone(2475,.15,'sine',.05,x)}else{tone(1500,.25,'sine',.12,x);tone(2250,.15,'sine',.06,x)}}
+  else if(T==='bubble'){if(big){tone(250,.1,'sine',.4,x,700);tone(350,.12,'sine',.3,x+.06,900)}else tone(300,.09,'sine',.35,x,720)}
+  else if(T==='drum'){if(big){tone(90,.22,'triangle',.9,x,38);noise(.08,.6,x,1200)}else{tone(130,.13,'triangle',.7,x,52);noise(.03,.3,x,2200)}}
+  else{if(big)tone(220,.1,'square',.14,x,110);else tone(440,.05,'square',.1,x)}};
+ if(k==='move')hit(a);else if(k==='cap')hit(a,1);else if(k==='castle'){hit(a);hit(a+.13)}
+ else if(k==='promo')[659,880,1175].forEach((f,i)=>tone(f,.18,w,.22,a+i*.07));
+ else if(k==='kx'){hit(a,1);tone(200,.5,T==='retro'?'square':'sawtooth',.16,a+.05,50)}
+ else if(k==='win')[523,659,784,1047].forEach((f,i)=>tone(f,.3,w,.25,a+i*.11));
+ else if(k==='lose')[392,330,262,196].forEach((f,i)=>tone(f,.35,w,.25,a+i*.13));
+ else if(k==='draw')[440,440].forEach((f,i)=>tone(f,.25,w,.22,a+i*.18))
+}catch(e){}}
+
+/* ============ ФИГУРЫ (встроенный SVG, без интернета) ============ */
+const BASE='<rect x="10" y="35" width="25" height="4" rx="1.5"/>';
+const SH={
+ P:'<circle cx="22.5" cy="13" r="5.5"/><path d="M17 35c0-8 2-12 5.5-14 3.5 2 5.5 6 5.5 14z"/>'+BASE,
+ R:'<path d="M13 35V17h19v18z"/><path d="M11 17V9h5v3h3.5V9h6v3H29V9h5v8z"/>'+BASE,
+ N:'<path d="M12 35c0-10 4-14 8-18l-5 1 2-5 5-5c6 0 12 5 12 14 0 4-1 8-1 13z"/><circle cx="21" cy="12" r="1.3" fill="S_" stroke="none"/>'+BASE,
+ B:'<path d="M22.5 5c-5 4-6 11-3 15l-2 3h11l-2-3c3-4 2-11-4-15z"/><path d="M18 23l-2 12h13l-2-12z"/><circle cx="22.5" cy="5" r="2"/>'+BASE,
+ Q:'<path d="M11 35L8 15l8 7 2.5-12 4 11 4-11 2.5 12 8-7-3 20z"/><circle cx="8" cy="15" r="2"/><circle cx="18.5" cy="10" r="2"/><circle cx="26.5" cy="10" r="2"/><circle cx="37" cy="15" r="2"/>'+BASE,
+ K:'<path d="M22.5 5v10M17.5 9.5h10" fill="none" stroke-width="2.4"/><path d="M12 35c-2-9 2-17 10.5-17S35 26 33 35z"/>'+BASE};
+const SETS={
+ classic:{wf:'#f5f5f5',ws:'#1a1a1a',bf:'#3a3a3a',bs:'#0b0b0b',sw:1.6,fx:'drop-shadow(0 1px 1.5px #0008)'},
+ wood:{wf:'#f3dfb5',ws:'#5a3a1a',bf:'#7a4a24',bs:'#2a170a',sw:1.6,fx:'drop-shadow(0 1px 1.5px #0007)'},
+ gold:{wf:'#ffd966',ws:'#6b4e00',bf:'#9aa6bd',bs:'#1d2433',sw:1.6,fx:'drop-shadow(0 1px 1.5px #0007)'},
+ mint:{wf:'#d9fff0',ws:'#0f5c45',bf:'#6a3fa0',bs:'#26103f',sw:1.6,fx:'drop-shadow(0 1px 1.5px #0007)'},
+ ember:{wf:'#ffd2a8',ws:'#8a2d00',bf:'#27324f',bs:'#080c18',sw:1.6,fx:'drop-shadow(0 1px 1.5px #0007)'},
+ glass:{wf:'rgba(255,255,255,.5)',ws:'#ffffff',bf:'rgba(0,0,0,.5)',bs:'#0b0b0b',sw:1.8,fx:'drop-shadow(0 1px 2px #0006)'},
+ ink:{wf:'#ffffff',ws:'#000000',bf:'#000000',bs:'#ffffff',sw:1.5,fx:'none'},
+ flat:{wf:'#ffffff',ws:'#ffffff',bf:'#14181f',bs:'#14181f',sw:.8,fx:'drop-shadow(0 1px 1px #0005)'},
+ neon:{wf:'rgba(90,224,255,.18)',ws:'#5ae0ff',bf:'rgba(255,90,200,.18)',bs:'#ff5ac8',sw:2.2,fx:'drop-shadow(0 0 3px currentColor)'}};
+if(!SETS[PS]&&PS!=='unicode')PS='classic';
+function pieceNode(q,pop){const w=isW(q),u=q.toUpperCase();let p;
+ if(PS==='unicode'){p=document.createElement('span');p.className='pc '+(w?'pw':'pb');p.textContent=GL[u]+'\uFE0E'}
+ else{const c=SETS[PS],F=w?c.wf:c.bf,S=w?c.ws:c.bs;p=document.createElement('span');p.className='pc im';p.style.color=S;p.style.filter=c.fx;
+  p.innerHTML='<svg viewBox="0 0 45 45" width="100%" height="100%"><g fill="'+F+'" stroke="'+S+'" stroke-width="'+c.sw+'" stroke-linejoin="round" stroke-linecap="round">'+SH[u].replace(/S_/g,S)+'</g></svg>'}
+ if(pop)p.classList.add('pop');return p}
+
 /* ============ ОТРИСОВКА ============ */
-function render(pop){if(!G)return;const s=G.s,b=s.b,flip=G.mode==='online'&&G.my==='b',bd=$('board');bd.innerHTML='';
+function render(pop){if(!G)return;const s=G.s,b=s.b,flip=G.mode==='online'&&G.my==='b',bd=$('board');bd.innerHTML='';const els=[],an=G.anim;G.anim=null;
  const kw=b.indexOf('K'),kb=b.indexOf('k'),vl={w:vuln(b,'w').length>0,b:vuln(b,'b').length>0},
   ck={w:kw>=0&&attackers(b,kw,'b').length>0,b:kb>=0&&attackers(b,kb,'w').length>0};
  const tg=new Map();if(G.sel!=null)G.legal.filter(m=>m.f===G.sel&&!m.kx).forEach(m=>{tg.set(m.t,m);if(m.alias>=0)tg.set(m.alias,m)});
@@ -248,10 +309,11 @@ function render(pop){if(!G)return;const s=G.s,b=s.b,flip=G.mode==='online'&&G.my
   if(tg.has(i)){const m=tg.get(i);d.classList.add('tg');if(q||m.ep)d.classList.add('cap');}
   if((flip?(i>>3)===0:(i>>3)===7)){const f=document.createElement('span');f.className='co f';f.textContent='abcdefgh'[i&7];d.appendChild(f)}
   if((flip?(i&7)===7:(i&7)===0)){const f=document.createElement('span');f.className='co r';f.textContent=8-(i>>3);d.appendChild(f)}
-  if(q){const p=document.createElement('span');p.className='pc '+(isW(q)?'pw':'pb')+(pop&&G.last&&G.last.t===i?' pop':'');p.textContent=GL[q.toUpperCase()]+'\uFE0E';
+  if(q){const p=pieceNode(q);p.draggable=false;
    if(canMove()&&isW(q)===(s.turn==='w')){p.draggable=true;p.ondragstart=e=>{G.sel=i;e.dataTransfer.setData('text','m')}}d.appendChild(p)}
-  d.onclick=()=>clickSq(i);d.ondragover=e=>e.preventDefault();d.ondrop=e=>{e.preventDefault();if(G.sel!=null)tryMove(G.sel,i)};
+  els[i]=d;d.onclick=()=>clickSq(i);d.ondragover=e=>e.preventDefault();d.ondrop=e=>{e.preventDefault();if(G.sel!=null){G.noAnim=true;tryMove(G.sel,i);G.noAnim=false}};
   bd.appendChild(d)}
+ if(an)an.forEach(x=>{const e1=els[x.f],e2=els[x.t],pc=e2&&e2.querySelector('.pc');if(!pc||!e1||e1===e2)return;const r1=e1.getBoundingClientRect(),r2=e2.getBoundingClientRect();pc.style.position='relative';pc.animate([{transform:'translate('+(r1.left-r2.left)+'px,'+(r1.top-r2.top)+'px)',zIndex:20},{transform:'translate(0,0)',zIndex:20}],{duration:190,easing:'ease-out'})});
  // статус
  const st=$('status');let h='';st.className='';
  if(G.over){st.className='end';h='<div><b>'+G.res+'</b></div>'}
@@ -259,9 +321,9 @@ function render(pop){if(!G)return;const s=G.s,b=s.b,flip=G.mode==='online'&&G.my
   h='<div>Ход: <b>'+NM(S)+'</b>'+(G.mode==='online'?(S===G.my?' (вы)':' (соперник)'):'')+'</div>'}
  st.innerHTML=h;
  // лог
- let lg='';if(!G.over)lg='<div style="color:var(--mt)">Нотация откроется после окончания партии.</div>';else{for(let i=0;i<G.log.length;i+=2){const f=x=>x?(x.includes('V')||x.includes('Kx')?'<span class="v">'+x+'</span>':x):'';lg+='<div class="m"><span class="n">'+(i/2+1)+'.</span><span>'+f(G.log[i])+'</span><span>'+f(G.log[i+1])+'</span></div>'}
- lg+='<div style="margin-top:6px;color:var(--ac)">'+G.res+'</div>'}
- $('log').innerHTML=lg;$('log').scrollTop=0;
+ let lg='';if(!G.over)lg='<div style="color:var(--mt)">Нотация откроется после окончания партии.</div>';else{for(let i=0;i<G.log.length;i+=2){const f=x=>x?x.replace(/ V$/,' <span class="v">V</span>').replace(/ D$/,' <span class="d">D</span>').replace(/Kx$/,'<span class="v">Kx</span>'):'';lg+='<div class="m"><span class="n">'+(i/2+1)+'.</span><span>'+f(G.log[i])+'</span><span>'+f(G.log[i+1])+'</span></div>'}
+ lg+='<div style="margin-top:6px;color:var(--ac)">'+G.res+'</div><div class="leg">V — король уязвим (Kx легально) · D — король атакован, но защищён (Kx нелегально) · + — шах сопернику · Kx — взятие короля</div>'}
+ $('log').innerHTML=lg;$('log').scrollTop=0;$('bPgn').classList.toggle('hide',!G.over);
  const bot=flip?'b':'w',top=opp(bot),me=G.mode==='online'?' (вы)':'';
  $('nBot').textContent=NM(bot)+(G.mode==='online'&&bot===G.my?me:'');$('nTop').textContent=NM(top)+(G.mode==='online'&&top===G.my?me:'');
  clocks()}
@@ -284,7 +346,8 @@ setInterval(()=>{if(!G||G.over)return;const n=performance.now(),d=n-G.t0;G.t0=n;
  clocks()},100);
 
 /* ============ СЕТЬ (PeerJS) ============ */
-const tcv=()=>{const[a,b]=$('tc').value.split('+').map(Number);return{min:a,inc:b,lim:$('lim').checked}};
+const tcv=()=>{const[a,b]=$('tc').value.split('+').map(Number);return{min:a,inc:b,lim:Math.max(0,Math.min(99,+$('limn').value||0)),f960:$('f960').checked}};
+const newPos=o=>o.f960?gen960():'RNBQKBNR';
 function cleanup(){try{conn&&conn.close()}catch(e){}try{peer&&peer.destroy()}catch(e){}conn=null;peer=null;hosting=false;hc=null}
 function need(){if(typeof Peer==='undefined'){$('mstat').textContent='PeerJS не загружен (проверьте интернет).';return false}return true}
 function createRoom(){if(!need())return;cleanup();hosting=true;
@@ -301,7 +364,7 @@ function setupConn(c){conn=c;
  c.on('open',()=>{if(hosting)startHost();else $('mstat').textContent='Подключено. Ждём начала партии…'});
  c.on('data',onData);
  c.on('close',()=>{toast('Соединение разорвано');if(G&&!G.over&&G.mode==='online')endGame(G.my,'соперник отключился',false)})}
-function startHost(){hc=hc?opp(hc):(Math.random()<.5?'w':'b');const o=tcv(),pos=gen960();
+function startHost(){const sd=$('side').value;hc=sd==='r'?(Math.random()<.5?'w':'b'):sd;const o=tcv(),pos=newPos(o);
  conn.send({t:'start',pos,hc,min:o.min,inc:o.inc,lim:o.lim});init({pos,my:hc,mode:'online',min:o.min,inc:o.inc,lim:o.lim})}
 function onData(d){if(d.t==='start')init({pos:d.pos,my:opp(d.hc),mode:'online',min:d.min,inc:d.inc,lim:d.lim});
  else if(!G)return;
@@ -312,16 +375,30 @@ function onData(d){if(d.t==='start')init({pos:d.pos,my:opp(d.hc),mode:'online',m
  else if(d.t==='drawaccept')endGame(null,'по соглашению',false);
  else if(d.t==='rematch'&&hosting)startHost()}
 
+/* ============ PGN ============ */
+function pgn(){const rk=G.rk,c=G.cfg,F='abcdefgh',rs=[...rk].map((x,i)=>x==='R'?i:-1).filter(i=>i>=0),
+ cs=rs.map(i=>F[i].toUpperCase()).join('')+rs.map(i=>F[i]).join(''),
+ fen=rk.toLowerCase()+'/pppppppp/8/8/8/8/PPPPPPPP/'+rk+' w '+cs+' - 0 1',d=new Date(),
+ dt=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+ let t='[Event "Execution Chess"]\n[Site "?"]\n[Date "'+dt+'"]\n[Round "-"]\n[White "?"]\n[Black "?"]\n[Result "'+G.rc+'"]\n[Variant "Execution Chess"]\n[SetUp "1"]\n[FEN "'+fen+'"]\n[TimeControl "'+(c.min*60)+(c.inc?'+'+c.inc:'')+'"]\n[Termination "'+G.why+'"]\n\n',mv='';
+ G.log.forEach((x,i)=>{const m=x.match(/^(\S+)(?: (V|D|Kx))?$/)||[0,x];if(i%2===0)mv+=(i/2+1)+'. ';mv+=m[1]+(m[2]?' {'+m[2]+'}':'')+' '});
+ return t+mv+G.rc+'\n'}
+$('bPgn').onclick=()=>{if(!G||!G.over)return;const t=pgn();try{navigator.clipboard.writeText(t)}catch(e){}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'application/x-chess-pgn'}));a.download='execution-chess.pgn';a.click();toast('PGN сохранён и скопирован в буфер обмена')};
+
 /* ============ КНОПКИ ============ */
 document.querySelectorAll('.bRules').forEach(b=>b.onclick=()=>$('rules').classList.remove('hide'));$('bRulesX').onclick=()=>$('rules').classList.add('hide');$('rules').onclick=e=>{if(e.target.id==='rules')$('rules').classList.add('hide')};
+$('pset').value=PS;$('pset').onchange=()=>{PS=$('pset').value;try{localStorage.setItem('ecps2',PS)}catch(e){}if(G)render()};
+$('sset').value=ST;$('sset').onchange=()=>{ST=$('sset').value;try{localStorage.setItem('ecst',ST)}catch(e){}sfx('cap')};
+$('bSnd').onclick=()=>{MUTE=!MUTE;$('bSnd').textContent=MUTE?'🔇':'🔊'};
 $('bCreate').onclick=createRoom;$('bJoin').onclick=joinRoom;
-$('bLocal').onclick=()=>{cleanup();const o=tcv();init({pos:gen960(),my:'w',mode:'local',min:o.min,inc:o.inc,lim:o.lim})};
+$('bLocal').onclick=()=>{cleanup();const o=tcv();init({pos:newPos(o),my:'w',mode:'local',min:o.min,inc:o.inc,lim:o.lim})};
 $('bRes').onclick=()=>{if(!G||G.over)return;if(!confirm('Сдаться?'))return;
  if(G.mode==='online'){conn&&conn.send({t:'resign'});endGame(opp(G.my),'сдача',false)}else endGame(opp(G.s.turn),'сдача',false)};
 $('bDraw').onclick=()=>{if(!G||G.over)return;
  if(G.mode==='online'){conn&&conn.send({t:'drawoffer'});toast('Предложение ничьей отправлено')}
  else if(confirm('Оба игрока согласны на ничью?'))endGame(null,'по соглашению',false)};
-$('bNew').onclick=()=>{if(!G)return;if(G.mode==='local'){const o=tcv();init({pos:gen960(),my:'w',mode:'local',min:o.min,inc:o.inc,lim:o.lim})}
+$('bNew').onclick=()=>{if(!G)return;if(G.mode==='local'){const o=tcv();init({pos:newPos(o),my:'w',mode:'local',min:o.min,inc:o.inc,lim:o.lim})}
  else if(hosting)startHost();else{conn&&conn.send({t:'rematch'});toast('Запрос новой партии отправлен хосту')}};
 $('bMenu').onclick=()=>{if(G&&!G.over&&!confirm('Выйти? Партия будет прервана.'))return;cleanup();G=null;$('gameScr').classList.add('hide');$('menu').classList.remove('hide');$('mstat').textContent=''};
 </script>
