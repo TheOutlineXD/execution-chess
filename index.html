@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Execution Chess v3.1</title>
+<title>Execution Chess</title>
 <style>
 :root{--bg:#111418;--pn:#1b2027;--pn2:#242b34;--tx:#e6e9ee;--mt:#8b95a5;--ac:#5aa9ff;--rd:#ff5d5d;--am:#f0b429;--gr:#4ade80;--lt:#9aa6b8;--dk:#566478;--bs:min(94vw,calc(100vh - 190px),600px)}
 *{box-sizing:border-box}
@@ -18,8 +18,8 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
 .row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
 #mstat{color:var(--mt);min-height:22px;font-size:14px}.id{font-size:22px;letter-spacing:3px;color:var(--ac)}
 .game{display:flex;gap:18px;justify-content:center;padding:14px;flex-wrap:wrap;align-items:flex-start}
-#board{width:var(--bs);height:var(--bs);display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:8px;overflow:hidden;box-shadow:0 8px 30px #0008;user-select:none}
-.sq{position:relative;display:flex;align-items:center;justify-content:center}
+#board{width:var(--bs);height:var(--bs);display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);aspect-ratio:1;border-radius:8px;overflow:hidden;box-shadow:0 8px 30px #0008;user-select:none}
+.sq{position:relative;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .lt{background:var(--lt)}.dk{background:var(--dk)}
 .sq.last{box-shadow:inset 0 0 0 100px #f0e06a55}.sq.sel{box-shadow:inset 0 0 0 100px #5aa9ffaa}
 .sq.tg::after{content:"";position:absolute;width:30%;height:30%;border-radius:50%;background:#0a1a2e66}
@@ -29,7 +29,7 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
 .sq.vul.lt{background:radial-gradient(circle,#ff2d2dcc 20%,#ff2d2d00 85%),var(--lt)}
 .sq.chk{background:radial-gradient(circle,#f0b429cc 20%,#f0b42900 85%),var(--dk)}
 .sq.chk.lt{background:radial-gradient(circle,#f0b429cc 20%,#f0b42900 85%),var(--lt)}
-.pc{font-size:calc(var(--bs)/8*.8);line-height:1;cursor:pointer;z-index:1}
+.pc{display:block;text-align:center;font-size:calc(var(--bs)/8*.8);line-height:1;cursor:pointer;z-index:1}
 .pw{color:#fafafa;text-shadow:0 0 2px #000,0 0 3px #000,0 1px 4px #000}
 .pb{color:#181818;text-shadow:0 0 2px #bbb,0 0 1px #999}
 .pc.pop{animation:pop .25s ease-out}@keyframes pop{from{transform:scale(1.35)}to{transform:scale(1)}}
@@ -47,17 +47,23 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
 #promo{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:9}
 #promo div{background:var(--pn);padding:16px;border-radius:12px;display:flex;gap:10px}
 #promo button{font-size:38px;padding:6px 16px}
+#rules{position:fixed;inset:0;background:#000b;display:flex;align-items:center;justify-content:center;z-index:11;padding:12px}
+#rules>div{background:var(--pn);border-radius:14px;max-width:680px;width:100%;max-height:90vh;display:flex;flex-direction:column}
+#rules header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #2a323c}
+#rules h2{margin:0;font-size:18px}#rules .body{overflow:auto;padding:6px 18px 16px;font-size:14px}
+#rules h3{margin:16px 0 4px;font-size:15px;color:var(--ac)}#rules p,#rules li{margin:4px 0}#rules ul{padding-left:20px;margin:4px 0}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000d;border:1px solid #444;padding:10px 16px;border-radius:10px;z-index:10;max-width:90vw;text-align:center}
 </style>
 </head>
 <body>
 <div id="menu" class="card">
- <div><h1>♚ Execution Chess <small style="color:var(--mt);font-size:13px">v3.1</small></h1><p class="sub">Chess960 + защищённый король + исчезающая рокировка</p></div>
+ <div><h1>♚ Execution Chess</h1><p class="sub">Chess960 + защищённый король + исчезающая рокировка</p></div>
  <div class="row"><label style="flex:0 0 auto">Контроль:</label><select id="tc"><option>1+0</option><option>3+0</option><option selected>5+0</option><option>10+0</option><option>3+2</option><option>5+3</option><option>15+10</option><option>30+0</option></select></div>
  <label><input type="checkbox" id="lim" checked style="flex:0">Рокировка сгорает после 10 ходов (п. 4.4)</label>
  <button class="pri" id="bCreate">Создать комнату</button>
  <div class="row"><input id="rid" placeholder="ID комнаты" maxlength="8" style="text-transform:uppercase"><button id="bJoin">Подключиться по ID</button></div>
  <button id="bLocal">Игра на одном устройстве</button>
+ <button class="bRules">Правила игры</button>
  <div id="mstat"></div>
 </div>
 
@@ -70,9 +76,36 @@ label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
   <div id="status"></div>
   <div id="log"></div>
   <div class="clock" id="cBot"><span id="nBot"></span><b id="tBot">0:00</b></div>
-  <div class="btns"><button id="bDraw">Ничья</button><button id="bRes">Сдаться</button><button id="bNew">Новая партия</button><button id="bMenu">Меню</button></div>
+  <div class="btns"><button id="bDraw">Ничья</button><button id="bRes">Сдаться</button><button id="bNew">Новая партия</button><button class="bRules">Правила</button><button id="bMenu">Меню</button></div>
  </div>
 </div>
+<div id="rules" class="hide"><div><header><h2>Правила Execution Chess</h2><button id="bRulesX">✕</button></header><div class="body">
+<p>Гибрид Chess960, механики защищённого короля и исчезающей рокировки. Игра на внимательность: цена ошибки — мгновенная победа соперника, если он её заметит.</p>
+<h3>1. Расстановка</h3><ul><li>Доска 8×8, стандартный комплект фигур, расстановка по Chess960: пешки на 2-й и 7-й горизонталях, король между ладьями, слоны на полях разного цвета, ферзь и кони — в остальных клетках.</li></ul>
+<h3>2. Ходы фигур</h3><ul><li>Ходы, взятия и правила пешек (ход на две клетки, взятие на проходе, превращение) — классические. Отличаются только правила шаха, защиты и взятия короля.</li></ul>
+<h3>3. Шах, защита и взятие короля</h3><ul>
+<li><b>Шах</b> не запрещает никакой ход. Можно оставить короля под боем, а можно даже подставить его — это проверка внимательности.</li>
+<li><b>Защита короля:</b> король защищён, если есть своя фигура (не король), которая может легально взять атакующую фигуру после того, как та возьмёт короля. Защитник не должен быть связан или заблокирован.</li>
+<li><b>Взятие короля (Kx)</b> легально, если король не защищён либо атакующая фигура прикрыта другой фигурой или пешкой её стороны. Нелегальное Kx сделать нельзя.</li>
+<li><b>Уязвимость (V):</b> если после хода игрока его королю можно легально сделать Kx, король уязвим.</li>
+<li>Соперник <b>вправе</b> взять короля следующим ходом и сразу победить, но не обязан. Если он сделал другой ход, право на Kx сгорает.</li>
+<li><b>Двойной шах:</b> каждая атакующая фигура оценивается отдельно. Нужно сделать ход, после которого Kx нелегально для всех. Если такого хода нет — мат. Если угроза от одной из фигур осталась — король по-прежнему уязвим.</li>
+<li>Тактика допустима: сначала можно убрать защитника, а следующим ходом взять короля.</li></ul>
+<h3>4. Рокировка (исчезающая)</h3><ul>
+<li>Один раз за партию, если король и ладья не ходили и поля между ними свободны. Правила Фишера: король идёт на g/c, ладья на f/d. Рокировку делайте ходом короля на свою ладью (или на поле g/c, если оно не обычный ход короля).</li>
+<li>Королю нельзя проходить через атакованные поля.</li>
+<li>Право сгорает, если король или ладья сходили, король получил любой шах (даже защищённый) или прошло 10 ходов (если не отключено в настройках).</li></ul>
+<h3>5. Окончание партии</h3><ul>
+<li><b>Взятие короля (Kx)</b> — немедленная победа.</li>
+<li><b>Мат:</b> королю можно сделать легальное Kx, и ни один ход не делает Kx нелегальным.</li>
+<li><b>Пат:</b> нет ходов, и король не под легальным ударом — ничья.</li>
+<li><b>Троекратное повторение</b> (учитываются фигуры, рокировка, взятие на проходе и состояние V), правило 50 ходов, ничья по согласию, сдача.</li></ul>
+<h3>6. Время</h3><ul><li>Упавший флаг — поражение. Если у соперника остался один король, фиксируется ничья. Если на доске состояние V, а игрок не успел сделать Kx до падения флага, он проигрывает по времени.</li></ul>
+<h3>7. Управление и нотация</h3><ul>
+<li>Ход — кликом или перетаскиванием. Взять короля — ходом на его клетку.</li>
+<li>Если соперник перевёл короля в V, а вы не заметили и сделали другой ход, ход засчитан, возврата нет. Игра не подсказывает ни шахи, ни уязвимость.</li>
+<li>Нотация (<b>+</b> шах, <b>#</b> мат, <b>V</b> уязвимость, <b>Kx</b> взятие короля) показывается после окончания партии.</li></ul>
+</div></div></div>
 <div id="promo" class="hide"><div></div></div>
 <div id="toast" class="hide"></div>
 
@@ -280,6 +313,7 @@ function onData(d){if(d.t==='start')init({pos:d.pos,my:opp(d.hc),mode:'online',m
  else if(d.t==='rematch'&&hosting)startHost()}
 
 /* ============ КНОПКИ ============ */
+document.querySelectorAll('.bRules').forEach(b=>b.onclick=()=>$('rules').classList.remove('hide'));$('bRulesX').onclick=()=>$('rules').classList.add('hide');$('rules').onclick=e=>{if(e.target.id==='rules')$('rules').classList.add('hide')};
 $('bCreate').onclick=createRoom;$('bJoin').onclick=joinRoom;
 $('bLocal').onclick=()=>{cleanup();const o=tcv();init({pos:gen960(),my:'w',mode:'local',min:o.min,inc:o.inc,lim:o.lim})};
 $('bRes').onclick=()=>{if(!G||G.over)return;if(!confirm('Сдаться?'))return;
