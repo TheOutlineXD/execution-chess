@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Execution Chess v3.1</title>
+<style>
+:root{--bg:#111418;--pn:#1b2027;--pn2:#242b34;--tx:#e6e9ee;--mt:#8b95a5;--ac:#5aa9ff;--rd:#ff5d5d;--am:#f0b429;--gr:#4ade80;--lt:#9aa6b8;--dk:#566478;--bs:min(94vw,calc(100vh - 190px),600px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,Segoe UI,Roboto,sans-serif;min-height:100vh}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mt);margin:0 0 18px;font-size:13px}
+.hide{display:none!important}
+.card{background:var(--pn);border:1px solid #2a323c;border-radius:14px;padding:22px;max-width:420px;margin:8vh auto;display:flex;flex-direction:column;gap:12px}
+button,select,input{font:inherit;border-radius:9px;border:1px solid #333c48;background:var(--pn2);color:var(--tx);padding:10px 14px}
+button{cursor:pointer;transition:.15s}button:hover{background:#2f3944}
+button.pri{background:var(--ac);color:#06121f;border:0;font-weight:600}button.pri:hover{filter:brightness(1.1)}
+label{color:var(--mt);font-size:13px;display:flex;gap:8px;align-items:center}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+#mstat{color:var(--mt);min-height:22px;font-size:14px}.id{font-size:22px;letter-spacing:3px;color:var(--ac)}
+.game{display:flex;gap:18px;justify-content:center;padding:14px;flex-wrap:wrap;align-items:flex-start}
+#board{width:var(--bs);height:var(--bs);display:grid;grid-template-columns:repeat(8,1fr);border-radius:8px;overflow:hidden;box-shadow:0 8px 30px #0008;user-select:none}
+.sq{position:relative;display:flex;align-items:center;justify-content:center}
+.lt{background:var(--lt)}.dk{background:var(--dk)}
+.sq.last{box-shadow:inset 0 0 0 100px #f0e06a55}.sq.sel{box-shadow:inset 0 0 0 100px #5aa9ffaa}
+.sq.tg::after{content:"";position:absolute;width:30%;height:30%;border-radius:50%;background:#0a1a2e66}
+.sq.tg.cap::after{width:92%;height:92%;background:none;border:5px solid #0a1a2e66}
+.sq.kx::after{content:"";position:absolute;inset:0;border:4px solid var(--rd);background:#ff5d5d44}
+.sq.vul{background:radial-gradient(circle,#ff2d2dcc 20%,#ff2d2d00 85%),var(--dk)}
+.sq.vul.lt{background:radial-gradient(circle,#ff2d2dcc 20%,#ff2d2d00 85%),var(--lt)}
+.sq.chk{background:radial-gradient(circle,#f0b429cc 20%,#f0b42900 85%),var(--dk)}
+.sq.chk.lt{background:radial-gradient(circle,#f0b429cc 20%,#f0b42900 85%),var(--lt)}
+.pc{font-size:calc(var(--bs)/8*.8);line-height:1;cursor:pointer;z-index:1}
+.pw{color:#fafafa;text-shadow:0 0 2px #000,0 0 3px #000,0 1px 4px #000}
+.pb{color:#181818;text-shadow:0 0 2px #bbb,0 0 1px #999}
+.pc.pop{animation:pop .25s ease-out}@keyframes pop{from{transform:scale(1.35)}to{transform:scale(1)}}
+.co{position:absolute;font-size:10px;color:#0009;font-weight:700}.co.f{right:3px;bottom:1px}.co.r{left:3px;top:1px}
+.side{width:300px;max-width:94vw;display:flex;flex-direction:column;gap:10px}
+.clock{display:flex;justify-content:space-between;align-items:center;background:var(--pn);border-radius:10px;padding:8px 14px;border:2px solid transparent}
+.clock.act{border-color:var(--ac)}.clock b{font:600 26px ui-monospace,Consolas,monospace}.clock.low b{color:var(--rd)}
+#status{background:var(--pn);border-radius:10px;padding:10px 14px;font-size:14px;border-left:4px solid var(--gr)}
+#status.v{border-color:var(--rd)}#status.c{border-color:var(--am)}#status.end{border-color:var(--ac)}
+#status div+div{margin-top:3px}
+#log{background:var(--pn);border-radius:10px;padding:8px 12px;height:210px;overflow:auto;font:13px ui-monospace,Consolas,monospace}
+#log .m{display:grid;grid-template-columns:30px 1fr 1fr;gap:4px;padding:1px 0}#log .n{color:var(--mt)}
+#log .v{color:var(--rd)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}.btns button{flex:1;padding:8px 6px;font-size:13px}
+#promo{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:9}
+#promo div{background:var(--pn);padding:16px;border-radius:12px;display:flex;gap:10px}
+#promo button{font-size:38px;padding:6px 16px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000d;border:1px solid #444;padding:10px 16px;border-radius:10px;z-index:10;max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+<div id="menu" class="card">
+ <div><h1>♚ Execution Chess <small style="color:var(--mt);font-size:13px">v3.1</small></h1><p class="sub">Chess960 + защищённый король + исчезающая рокировка</p></div>
+ <div class="row"><label style="flex:0 0 auto">Контроль:</label><select id="tc"><option>1+0</option><option>3+0</option><option selected>5+0</option><option>10+0</option><option>3+2</option><option>5+3</option><option>15+10</option><option>30+0</option></select></div>
+ <label><input type="checkbox" id="lim" checked style="flex:0">Рокировка сгорает после 10 ходов (п. 4.4)</label>
+ <button class="pri" id="bCreate">Создать комнату</button>
+ <div class="row"><input id="rid" placeholder="ID комнаты" maxlength="8" style="text-transform:uppercase"><button id="bJoin">Подключиться по ID</button></div>
+ <button id="bLocal">Игра на одном устройстве</button>
+ <div id="mstat"></div>
+</div>
+
+<div id="gameScr" class="game hide">
+ <div>
+  <div id="board"></div>
+ </div>
+ <div class="side">
+  <div class="clock" id="cTop"><span id="nTop"></span><b id="tTop">0:00</b></div>
+  <div id="status"></div>
+  <div id="log"></div>
+  <div class="clock" id="cBot"><span id="nBot"></span><b id="tBot">0:00</b></div>
+  <div class="btns"><button id="bDraw">Ничья</button><button id="bRes">Сдаться</button><button id="bNew">Новая партия</button><button id="bMenu">Меню</button></div>
+ </div>
+</div>
+<div id="promo" class="hide"><div></div></div>
+<div id="toast" class="hide"></div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const GL={K:'♚',Q:'♛',R:'♜',B:'♝',N:'♞',P:'♟'};
+const isW=q=>q===q.toUpperCase(), opp=c=>c==='w'?'b':'w', sqn=i=>'abcdefgh'[i&7]+(8-(i>>3));
+const NM=c=>c==='w'?'Белые':'Чёрные';
+const N_OFF=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+const K_OFF=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const R_D=[[-1,0],[1,0],[0,-1],[0,1]],B_D=[[-1,-1],[-1,1],[1,-1],[1,1]];
+let G=null,peer=null,conn=null,hosting=false,hc=null,tt=null;
+
+/* ============ ДВИЖОК ============ */
+function gen960(){const a=Array(8).fill(null),fr=()=>a.map((v,i)=>v?null:i).filter(v=>v!==null),pk=l=>l[Math.random()*l.length|0];
+ a[pk([0,2,4,6])]='B';a[pk([1,3,5,7])]='B';a[pk(fr())]='Q';a[pk(fr())]='N';a[pk(fr())]='N';
+ const f=fr();a[f[0]]='R';a[f[1]]='K';a[f[2]]='R';return a.join('')}
+
+// какие фигуры стороны side атакуют поле sq (псевдо-атака)
+function attackers(b,sq,side){const res=[],w=side==='w',r=sq>>3,c=sq&7;
+ const chk=(rr,cc,set)=>{if(rr<0||rr>7||cc<0||cc>7)return false;const q=b[rr*8+cc];return !!q&&isW(q)===w&&set.includes(q.toLowerCase())};
+ const pr=w?r+1:r-1;[c-1,c+1].forEach(cc=>{if(chk(pr,cc,'p'))res.push(pr*8+cc)});
+ N_OFF.forEach(([a,d])=>{if(chk(r+a,c+d,'n'))res.push((r+a)*8+c+d)});
+ K_OFF.forEach(([a,d])=>{if(chk(r+a,c+d,'k'))res.push((r+a)*8+c+d)});
+ [[R_D,'rq'],[B_D,'bq']].forEach(([ds,set])=>ds.forEach(([a,d])=>{let rr=r+a,cc=c+d;
+  while(rr>=0&&rr<8&&cc>=0&&cc<8){const q=b[rr*8+cc];if(q){if(isW(q)===w&&set.includes(q.toLowerCase()))res.push(rr*8+cc);break}rr+=a;cc+=d}}));
+ return res}
+
+// Правила 3.2/3.3: легально ли взятие короля фигурой a (король на k, жертва — сторона X)
+function kxLegal(b,k,a,X,A){const O=opp(X),b2=b.slice();b2[k]=b2[a];b2[a]=null;
+ const prot=attackers(b2,k,O).length>0;                       // атакующий прикрыт (3.3)
+ const defs=attackers(b2,k,X).filter(d=>{const b3=b.slice();b3[d]=null;   // защитник не связан (3.2, 7.2)
+  return !attackers(b3,k,O).some(x=>!A.includes(x))});
+ return defs.length===0||prot}
+
+// список атакующих, имеющих легальное Kx против короля стороны X
+function vuln(b,X){const k=b.indexOf(X==='w'?'K':'k');if(k<0)return[];const A=attackers(b,k,opp(X));return A.filter(a=>kxLegal(b,k,a,X,A))}
+
+function pseudo(s){const b=s.b,w=s.turn==='w',out=[];
+ const push=(f,t,x)=>out.push(Object.assign({f,t,kx:!!b[t]&&b[t].toLowerCase()==='k'},x||{}));
+ for(let i=0;i<64;i++){const p=b[i];if(!p||isW(p)!==w)continue;const k=p.toLowerCase(),r=i>>3,c=i&7;
+  const tgt=(rr,cc)=>{if(rr<0||rr>7||cc<0||cc>7)return;const q=b[rr*8+cc];if(q&&isW(q)===w)return;push(i,rr*8+cc)};
+  if(k==='n')N_OFF.forEach(([a,d])=>tgt(r+a,c+d));
+  else if(k==='k'){K_OFF.forEach(([a,d])=>tgt(r+a,c+d));
+   (s.cast[s.turn]||[]).forEach(q=>{if(b[q]!==(w?'R':'r')||(q>>3)!==r)return;
+    const rc=q&7,kd=rc>c?6:2,rd=rc>c?5:3,lo=Math.min(c,rc,kd,rd),hi=Math.max(c,rc,kd,rd);
+    for(let x=lo;x<=hi;x++){const sq=r*8+x;if(sq!==i&&sq!==q&&b[sq])return}
+    const tb=b.slice();tb[i]=null;tb[q]=null;
+    for(let x=Math.min(c,kd);x<=Math.max(c,kd);x++)if(attackers(tb,r*8+x,opp(s.turn)).length)return; // 4.2
+    out.push({f:i,t:q,castle:true,kd,rd,kx:false,alias:Math.abs(kd-c)>=2?r*8+kd:-1})})}
+  else if(k==='p'){const dir=w?-1:1,r1=r+dir,last=w?0:7,st=w?6:1;
+   const addp=(t,x)=>{const kk=b[t]&&b[t].toLowerCase()==='k';if(r1===last&&!kk)'QRBN'.split('').forEach(pr=>push(i,t,{promo:pr}));else push(i,t,x)};
+   if(r1>=0&&r1<8){if(!b[r1*8+c]){addp(r1*8+c);if(r===st&&!b[(r+2*dir)*8+c])push(i,(r+2*dir)*8+c)}
+    [c-1,c+1].forEach(cc=>{if(cc<0||cc>7)return;const t=r1*8+cc,q=b[t];if(q&&isW(q)!==w)addp(t);else if(!q&&t===s.ep)push(i,t,{ep:true})})}}
+  else{const ds=k==='r'?R_D:k==='b'?B_D:R_D.concat(B_D);
+   ds.forEach(([a,d])=>{let rr=r+a,cc=c+d;while(rr>=0&&rr<8&&cc>=0&&cc<8){const q=b[rr*8+cc];if(q){if(isW(q)!==w)push(i,rr*8+cc);break}push(i,rr*8+cc);rr+=a;cc+=d}})}}
+ return out}
+
+function genLegal(s){const X=opp(s.turn);return pseudo(s).filter(m=>!m.kx||kxLegal(s.b,m.t,m.f,X,attackers(s.b,m.t,s.turn)))}
+
+function apply(s,m){const n={b:s.b.slice(),turn:opp(s.turn),cast:{w:s.cast.w.slice(),b:s.cast.b.slice()},ep:-1,half:s.half+1,full:s.full+(s.turn==='b'?1:0),lim:s.lim},b=n.b,p=b[m.f],w=s.turn==='w';
+ if(m.castle){const r=m.f>>3;b[m.f]=null;b[m.t]=null;b[r*8+m.kd]=p;b[r*8+m.rd]=w?'R':'r';n.cast[s.turn]=[]}
+ else{if(b[m.t]||p.toLowerCase()==='p')n.half=0;
+  if(m.ep)b[m.t+(w?8:-8)]=null;
+  b[m.t]=m.promo?(w?m.promo:m.promo.toLowerCase()):p;b[m.f]=null;
+  if(p.toLowerCase()==='p'&&Math.abs(m.t-m.f)===16)n.ep=(m.f+m.t)/2;
+  if(p.toLowerCase()==='k')n.cast[s.turn]=[];
+  ['w','b'].forEach(c=>n.cast[c]=n.cast[c].filter(q=>q!==m.f&&q!==m.t))}
+ if(n.lim&&n.full>10){n.cast.w=[];n.cast.b=[]}                       // 4.4: 10 ходов
+ ['w','b'].forEach(c=>{const k=b.indexOf(c==='w'?'K':'k');if(k>=0&&attackers(b,k,opp(c)).length)n.cast[c]=[]}); // 4.4: любой шах
+ return n}
+
+function evalPos(s){const S=s.turn,legal=genLegal(s),oppV=legal.some(m=>m.kx),self=vuln(s.b,S).length>0;let mat=false,pat=false;
+ if(!oppV){if(self)mat=!legal.some(m=>!vuln(apply(s,m).b,S).length);else pat=legal.length===0}  // 5.1 / 5.2
+ return{legal,oppV,self,mat,pat}}
+
+function san(s,m,ps){const b=s.b,p=b[m.f],k=p.toLowerCase();
+ if(m.castle)return (m.t&7)>(m.f&7)?'O-O':'O-O-O';
+ const cap=b[m.t]||m.ep,t=sqn(m.t),F='abcdefgh';
+ if(k==='p')return(cap?F[m.f&7]+'x':'')+t+(m.promo?'='+m.promo:'');
+ let d='';const o=ps.filter(x=>x.f!==m.f&&!x.castle&&b[x.f]===p&&x.t===m.t&&!x.promo);
+ if(o.length){const sf=o.some(x=>(x.f&7)===(m.f&7)),sr=o.some(x=>(x.f>>3)===(m.f>>3));d=!sf?F[m.f&7]:!sr?String(8-(m.f>>3)):sqn(m.f)}
+ return k.toUpperCase()+d+(cap?'x':'')+t}
+
+const posKey=s=>s.b.map(q=>q||'.').join('')+s.turn+s.cast.w+'|'+s.cast.b+s.ep+(vuln(s.b,'w').length?'V':'-')+(vuln(s.b,'b').length?'V':'-');
+
+/* ============ ХОД ИГРЫ ============ */
+function init(cfg){const rk=cfg.pos,b=Array(64).fill(null),cast={w:[],b:[]};
+ for(let i=0;i<8;i++){b[i]=rk[i].toLowerCase();b[8+i]='p';b[48+i]='P';b[56+i]=rk[i];if(rk[i]==='R'){cast.w.push(56+i);cast.b.push(i)}}
+ const s={b,turn:'w',cast,ep:-1,half:0,full:1,lim:cfg.lim};
+ G={s,log:[],my:cfg.my,mode:cfg.mode,clock:{w:cfg.min*60000,b:cfg.min*60000},inc:cfg.inc*1000,over:false,sel:null,last:null,rep:{},t0:performance.now(),res:'',legal:null,rk};
+ G.legal=evalPos(s).legal;G.rep[posKey(s)]=1;
+ $('menu').classList.add('hide');$('gameScr').classList.remove('hide');$('promo').classList.add('hide');
+ $('bNew').classList.toggle('hide',false);render()}
+
+const canMove=()=>G&&!G.over&&(G.mode==='local'||G.s.turn===G.my);
+
+function doMove(m,net){const s=G.s,mover=s.turn,ps=pseudo(s),base=san(s,m,ps);
+ if(G.mode==='online'&&!net&&conn&&conn.open)conn.send({t:'move',f:m.f,t2:m.t,promo:m.promo||null});
+ G.last={f:m.f,t:m.t};G.sel=null;
+ if(m.kx){G.log.push(base+' Kx');G.s=Object.assign({},s,{b:s.b.slice()});G.s.b[m.t]=s.b[m.f];G.s.b[m.f]=null;
+  return endGame(mover,'взятие короля (Kx)',false)}
+ const s2=apply(s,m),r=evalPos(s2);G.s=s2;G.clock[mover]+=G.inc;G.legal=r.legal;
+ const ok=s2.b.indexOf(mover==='w'?'k':'K'),att=ok>=0&&attackers(s2.b,ok,mover).length>0;
+ G.log.push(base+(r.mat?'#':att?'+':'')+(r.oppV?' V':''));
+ const key=posKey(s2);G.rep[key]=(G.rep[key]||0)+1;
+ if(r.mat)endGame(mover,'мат (#)',false);
+ else if(r.pat)endGame(null,'пат',false);
+ else if(s2.b.every(q=>!q||q.toLowerCase()==='k'))endGame(null,'недостаточно материала (8.3)',false);
+ else if(s2.half>=100)endGame(null,'правило 50 ходов',false);
+ else if(G.rep[key]>=3)endGame(null,'троекратное повторение',false);
+ else render(true)}
+
+function endGame(w,reason,send){if(G.over)return;G.over=true;G.sel=null;
+ G.res=w?NM(w)+' победили — '+reason:'Ничья — '+reason;
+ if(send&&G.mode==='online'&&conn&&conn.open)conn.send({t:'over',w,reason});
+ render()}
+
+function findMoves(f,t){return G.legal.filter(m=>m.f===f&&(m.t===t||m.alias===t))}
+function tryMove(f,t){if(!canMove())return;const ms=findMoves(f,t);
+ if(!ms.length){const b=G.s.b;if(b[t]&&b[t].toLowerCase()==='k'&&pseudo(G.s).some(m=>m.f===f&&m.t===t&&m.kx))toast('Kx нелегально: король защищён, а атакующий не прикрыт (3.2–3.3)');
+  G.sel=null;return render()}
+ if(ms.length>1&&ms[0].promo){const box=$('promo').firstElementChild;box.innerHTML='';
+  ms.forEach(m=>{const bt=document.createElement('button'),w=G.s.turn==='w';bt.textContent=GL[m.promo];bt.className=w?'pw':'pb';
+   bt.style.background='#8d99ab';bt.onclick=()=>{$('promo').classList.add('hide');doMove(m,false)};box.appendChild(bt)});
+  $('promo').classList.remove('hide');return}
+ doMove(ms[0],false)}
+
+/* ============ ОТРИСОВКА ============ */
+function render(pop){if(!G)return;const s=G.s,b=s.b,flip=G.mode==='online'&&G.my==='b',bd=$('board');bd.innerHTML='';
+ const kw=b.indexOf('K'),kb=b.indexOf('k'),vl={w:vuln(b,'w').length>0,b:vuln(b,'b').length>0},
+  ck={w:kw>=0&&attackers(b,kw,'b').length>0,b:kb>=0&&attackers(b,kb,'w').length>0};
+ const tg=new Map();if(G.sel!=null)G.legal.filter(m=>m.f===G.sel&&!m.kx).forEach(m=>{tg.set(m.t,m);if(m.alias>=0)tg.set(m.alias,m)});
+ for(let n=0;n<64;n++){const i=flip?63-n:n,q=b[i],d=document.createElement('div');
+  d.className='sq '+(((i>>3)+(i&7))%2?'dk':'lt');
+  if(G.last&&(G.last.f===i||G.last.t===i))d.classList.add('last');
+  if(i===G.sel)d.classList.add('sel');
+  if(tg.has(i)){const m=tg.get(i);d.classList.add('tg');if(q||m.ep)d.classList.add('cap');}
+  if((flip?(i>>3)===0:(i>>3)===7)){const f=document.createElement('span');f.className='co f';f.textContent='abcdefgh'[i&7];d.appendChild(f)}
+  if((flip?(i&7)===7:(i&7)===0)){const f=document.createElement('span');f.className='co r';f.textContent=8-(i>>3);d.appendChild(f)}
+  if(q){const p=document.createElement('span');p.className='pc '+(isW(q)?'pw':'pb')+(pop&&G.last&&G.last.t===i?' pop':'');p.textContent=GL[q.toUpperCase()]+'\uFE0E';
+   if(canMove()&&isW(q)===(s.turn==='w')){p.draggable=true;p.ondragstart=e=>{G.sel=i;e.dataTransfer.setData('text','m')}}d.appendChild(p)}
+  d.onclick=()=>clickSq(i);d.ondragover=e=>e.preventDefault();d.ondrop=e=>{e.preventDefault();if(G.sel!=null)tryMove(G.sel,i)};
+  bd.appendChild(d)}
+ // статус
+ const st=$('status');let h='';st.className='';
+ if(G.over){st.className='end';h='<div><b>'+G.res+'</b></div>'}
+ else{const S=s.turn;
+  h='<div>Ход: <b>'+NM(S)+'</b>'+(G.mode==='online'?(S===G.my?' (вы)':' (соперник)'):'')+'</div>'}
+ st.innerHTML=h;
+ // лог
+ let lg='';if(!G.over)lg='<div style="color:var(--mt)">Нотация откроется после окончания партии.</div>';else{for(let i=0;i<G.log.length;i+=2){const f=x=>x?(x.includes('V')||x.includes('Kx')?'<span class="v">'+x+'</span>':x):'';lg+='<div class="m"><span class="n">'+(i/2+1)+'.</span><span>'+f(G.log[i])+'</span><span>'+f(G.log[i+1])+'</span></div>'}
+ lg+='<div style="margin-top:6px;color:var(--ac)">'+G.res+'</div>'}
+ $('log').innerHTML=lg;$('log').scrollTop=0;
+ const bot=flip?'b':'w',top=opp(bot),me=G.mode==='online'?' (вы)':'';
+ $('nBot').textContent=NM(bot)+(G.mode==='online'&&bot===G.my?me:'');$('nTop').textContent=NM(top)+(G.mode==='online'&&top===G.my?me:'');
+ clocks()}
+
+function fmt(ms){ms=Math.max(0,ms);const m=Math.floor(ms/60000),s=Math.floor(ms/1000)%60;return ms<10000?s+'.'+Math.floor(ms%1000/100):m+':'+String(s).padStart(2,'0')}
+function clocks(){if(!G)return;const flip=G.mode==='online'&&G.my==='b',bot=flip?'b':'w',top=opp(bot);
+ [['Bot',bot],['Top',top]].forEach(([k,c])=>{$('t'+k).textContent=fmt(G.clock[c]);const e=$('c'+k);e.classList.toggle('act',!G.over&&G.s.turn===c);e.classList.toggle('low',G.clock[c]<20000)})}
+
+function clickSq(i){if(!canMove())return;const p=G.s.b[i];
+ if(G.sel!=null&&G.sel!==i&&(findMoves(G.sel,i).length||(p&&isW(p)!==(G.s.turn==='w')))){return tryMove(G.sel,i)}
+ G.sel=(p&&isW(p)===(G.s.turn==='w')&&G.sel!==i)?i:null;render()}
+
+function toast(t){const e=$('toast');e.textContent=t;e.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>e.classList.add('hide'),3200)}
+
+/* ============ ЧАСЫ ============ */
+setInterval(()=>{if(!G||G.over)return;const n=performance.now(),d=n-G.t0;G.t0=n;const t=G.s.turn;G.clock[t]-=d;
+ if(G.clock[t]<=0){G.clock[t]=0;
+  if(G.mode==='local'||G.my===t){const o=opp(t),mat=G.s.b.filter(q=>q&&(isW(q)===(o==='w'))&&q.toLowerCase()!=='k').length;
+   if(!mat)endGame(null,'флаг, у соперника недостаточно материала (8.3)',true);else endGame(o,'падение флага (8.2)',true)}}
+ clocks()},100);
+
+/* ============ СЕТЬ (PeerJS) ============ */
+const tcv=()=>{const[a,b]=$('tc').value.split('+').map(Number);return{min:a,inc:b,lim:$('lim').checked}};
+function cleanup(){try{conn&&conn.close()}catch(e){}try{peer&&peer.destroy()}catch(e){}conn=null;peer=null;hosting=false;hc=null}
+function need(){if(typeof Peer==='undefined'){$('mstat').textContent='PeerJS не загружен (проверьте интернет).';return false}return true}
+function createRoom(){if(!need())return;cleanup();hosting=true;
+ const code=Array.from({length:5},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random()*32|0]).join('');
+ peer=new Peer('exch-'+code);
+ peer.on('open',()=>{$('mstat').innerHTML='ID комнаты: <span class="id">'+code+'</span><br>Передайте его сопернику. Ожидание подключения…'});
+ peer.on('connection',c=>{if(conn&&conn.open){c.close();return}setupConn(c)});
+ peer.on('error',e=>{if(e.type==='unavailable-id')createRoom();else $('mstat').textContent='Ошибка: '+e.type})}
+function joinRoom(){if(!need())return;const code=$('rid').value.trim().toUpperCase();if(!code)return toast('Введите ID комнаты');
+ cleanup();peer=new Peer();$('mstat').textContent='Подключение…';
+ peer.on('open',()=>setupConn(peer.connect('exch-'+code,{reliable:true})));
+ peer.on('error',e=>{$('mstat').textContent=e.type==='peer-unavailable'?'Комната не найдена':'Ошибка: '+e.type})}
+function setupConn(c){conn=c;
+ c.on('open',()=>{if(hosting)startHost();else $('mstat').textContent='Подключено. Ждём начала партии…'});
+ c.on('data',onData);
+ c.on('close',()=>{toast('Соединение разорвано');if(G&&!G.over&&G.mode==='online')endGame(G.my,'соперник отключился',false)})}
+function startHost(){hc=hc?opp(hc):(Math.random()<.5?'w':'b');const o=tcv(),pos=gen960();
+ conn.send({t:'start',pos,hc,min:o.min,inc:o.inc,lim:o.lim});init({pos,my:hc,mode:'online',min:o.min,inc:o.inc,lim:o.lim})}
+function onData(d){if(d.t==='start')init({pos:d.pos,my:opp(d.hc),mode:'online',min:d.min,inc:d.inc,lim:d.lim});
+ else if(!G)return;
+ else if(d.t==='move'){if(G.over)return;const m=G.legal.find(x=>x.f===d.f&&x.t===d.t2&&(x.promo||null)===(d.promo||null));m?doMove(m,true):toast('Рассинхрон: получен нелегальный ход')}
+ else if(d.t==='over'&&!G.over)endGame(d.w,d.reason,false);
+ else if(d.t==='resign')endGame(G.my,'соперник сдался',false);
+ else if(d.t==='drawoffer'){if(confirm('Соперник предлагает ничью. Принять?')){conn.send({t:'drawaccept'});endGame(null,'по соглашению',false)}}
+ else if(d.t==='drawaccept')endGame(null,'по соглашению',false);
+ else if(d.t==='rematch'&&hosting)startHost()}
+
+/* ============ КНОПКИ ============ */
+$('bCreate').onclick=createRoom;$('bJoin').onclick=joinRoom;
+$('bLocal').onclick=()=>{cleanup();const o=tcv();init({pos:gen960(),my:'w',mode:'local',min:o.min,inc:o.inc,lim:o.lim})};
+$('bRes').onclick=()=>{if(!G||G.over)return;if(!confirm('Сдаться?'))return;
+ if(G.mode==='online'){conn&&conn.send({t:'resign'});endGame(opp(G.my),'сдача',false)}else endGame(opp(G.s.turn),'сдача',false)};
+$('bDraw').onclick=()=>{if(!G||G.over)return;
+ if(G.mode==='online'){conn&&conn.send({t:'drawoffer'});toast('Предложение ничьей отправлено')}
+ else if(confirm('Оба игрока согласны на ничью?'))endGame(null,'по соглашению',false)};
+$('bNew').onclick=()=>{if(!G)return;if(G.mode==='local'){const o=tcv();init({pos:gen960(),my:'w',mode:'local',min:o.min,inc:o.inc,lim:o.lim})}
+ else if(hosting)startHost();else{conn&&conn.send({t:'rematch'});toast('Запрос новой партии отправлен хосту')}};
+$('bMenu').onclick=()=>{if(G&&!G.over&&!confirm('Выйти? Партия будет прервана.'))return;cleanup();G=null;$('gameScr').classList.add('hide');$('menu').classList.remove('hide');$('mstat').textContent=''};
+</script>
+</body>
+</html>
